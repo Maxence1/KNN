@@ -30,7 +30,24 @@ def softmax_loss_naive(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  dW_each = np.zeros_like(W)
+  num_train, dim = X.shape
+  num_class = W.shape[1]
+  f = X.dot(W)    # N by C
+  # Considering the Numeric Stability
+  f_max = np.reshape(np.max(f, axis=1), (num_train, 1))   # N by 1
+  prob = np.exp(f - f_max) / np.sum(np.exp(f - f_max), axis=1, keepdims=True) # N by C
+  y_trueClass = np.zeros_like(prob)
+  y_trueClass[np.arange(num_train), y] = 1.0
+  for i in xrange(num_train):
+      for j in xrange(num_class):    
+          loss += -(y_trueClass[i, j] * np.log(prob[i, j]))    
+          dW_each[:, j] = -(y_trueClass[i, j] - prob[i, j]) * X[i, :]
+      dW += dW_each
+  loss /= num_train
+  loss += 0.5 * reg * np.sum(W * W)
+  dW /= num_train
+  dW += reg * W
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
@@ -54,7 +71,17 @@ def softmax_loss_vectorized(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  num_train, dim = X.shape
+
+  f = X.dot(W)    # N by C
+  # Considering the Numeric Stability
+  f_max = np.reshape(np.max(f, axis=1), (num_train, 1))   # N by 1
+  prob = np.exp(f - f_max) / np.sum(np.exp(f - f_max), axis=1, keepdims=True)
+  y_trueClass = np.zeros_like(prob)
+  y_trueClass[range(num_train), y] = 1.0    # N by C
+  loss += -np.sum(y_trueClass * np.log(prob)) / num_train + 0.5 * reg * np.sum(W * W)
+  dW += -np.dot(X.T, y_trueClass - prob) / num_train + reg * W
+
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
